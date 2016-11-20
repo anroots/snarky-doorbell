@@ -1,6 +1,7 @@
 from encoder import Encoder
 from led import Led
 from speaker import Speaker
+from receiver import Receiver
 
 
 class Doorbell:
@@ -19,7 +20,9 @@ class Doorbell:
         style_encoder = Encoder(15, 27, self.change_style, 14, self.style_button)
 
         status_led = Led(12, 13, 18)
-        status_led.ready()
+
+        receiver = Receiver(10)
+        receiver.test()
 
         self.speaker = Speaker(self.logger)
         self.speaker.volume(self.volume)
