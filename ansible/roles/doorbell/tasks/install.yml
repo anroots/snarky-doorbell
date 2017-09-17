@@ -1,0 +1,31 @@
+- name: Install apt packages
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+    cache_valid_time: 3600
+    state: present
+  with_items:
+    - python-dev
+    - libboost-python-dev
+    - python-pip
+    - git
+    - omxplayer
+    - python-pygame
+
+- name: Checkout wiringPi
+  git:
+    repo: 'git://git.drogon.net/wiringPi'
+    dest: /opt/wiringpi
+
+- name: Build wiringPi
+  command: /opt/wiringpi/build
+  args:
+    chdir: /opt/wiringpi
+
+- name: Install pip packages
+  pip:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - pi_switch
+    - pygame

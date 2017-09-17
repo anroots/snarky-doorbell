@@ -1,0 +1,13 @@
+- include: install.yml
+
+- name: Create doorbell home directory
+  file:
+    path: /opt/doorbell
+    state: directory
+    owner: pi
+
+- name: Copy sound files
+  copy:
+    src: wav
+    dest: /opt/doorbell
+    owner: pi

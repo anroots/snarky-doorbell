@@ -5,7 +5,7 @@ from receiver import Receiver
 
 
 class Doorbell:
-    volume = 5
+    volume = 100
     voice = 1
     style = 1
     status = 1
@@ -26,7 +26,7 @@ class Doorbell:
 
         self.speaker = Speaker(self.logger)
         self.speaker.volume(self.volume)
-
+        #self.speaker.say('/opt/doorbell/wav/test2.wav')
 
     def mute(self, button):
         self.logger.info("Mute pressed!")

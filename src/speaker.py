@@ -19,8 +19,7 @@ class Speaker:
 
 
     def volume(self, volume):
-        volume = round(volume/100,2)
-        self.logger.info("Set volume to %s", volume)
+        self.logger.info("Set volume to %f" % volume)
         self.channel.set_volume(volume)
 
     def mute(self):

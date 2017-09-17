@@ -13,14 +13,13 @@ class Receiver:
     def test(self):
 
         receiver = RCSwitchReceiver()
-        receiver.enableReceive(12)
+        receiver.enableReceive(self.data_pin)
 
         num = 0
-        print "test"
+        print "Listening on pin %s" %self.data_pin
         while True:
-            GPIO.output(12, 1)
             if receiver.available():
-                GPIO.output(12, 0)
+                print "Data available"
                 received_value = receiver.getReceivedValue()
                 if received_value:
                     num += 1
