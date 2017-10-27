@@ -1,0 +1,16 @@
+[Unit]
+Description=Doorbell service daemon
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python /opt/doorbell/src/main.py
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=doorbell
+LogLevel=info
+
+
+[Install]
+WantedBy=multi-user.target

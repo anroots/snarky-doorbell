@@ -11,3 +11,22 @@
     src: wav
     dest: /opt/doorbell
     owner: pi
+
+- name: Disable audio dither to avoid white noise
+  lineinfile:
+    path: /boot/config.txt
+    line: 'disable_audio_dither=1'
+    state: present
+
+- name: Copy doorbell daemon config
+  copy:
+    src: doorbell.service
+    dest: /etc/systemd/system
+    mode: 0644
+
+- name: Start doorbell daemon on startup
+  systemd:
+    daemon_reload: yes
+    enabled: yes
+    name: doorbell
+    state: started

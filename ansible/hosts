@@ -1,2 +1,2 @@
 [doorbell]
-192.168.81.10 ansible_user=pi ansible_become=true
+192.168.50.121 ansible_user=pi ansible_become=true

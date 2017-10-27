@@ -4,3 +4,13 @@ sudo pip install pi_switch
 
 ./bootstrap.sh --with-libraries=python --with-python=python3.2
 sudo ./b2 install
+
+
+Set system volume to maximum
+
+```bash
+$ amixer set PCM -- 100%
+
+# Make this permanent
+$ sudo alsactl store
+```
