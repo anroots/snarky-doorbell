@@ -1,5 +1,6 @@
 import os
 import random
+from time import sleep
 
 from encoder import Encoder
 from led import Led
@@ -52,6 +53,7 @@ class Doorbell:
         self.speaker = Speaker(self.logger, self.volume)
 
         self.voices = self.list_voices()
+        self.logger.debug("Init done, will wait for I/O interrupts...")
 
     def mute(self, pin):
         self.logger.info("Mute pressed!")
@@ -68,7 +70,7 @@ class Doorbell:
     def change_volume(self, direction):
         self.change('volume', direction, min=0, max=100, amount=5)
         self.speaker.set_volume(self.volume)
-        self.speaker.say("%s/pluck.wav"%self.audio_path)
+        self.speaker.say("%s/volume.wav" % self.audio_path)
         self.logger.info('Volume set to %d', self.volume)
 
     def voice_button(self, value):
@@ -120,4 +122,5 @@ class Doorbell:
         candidates = list(set(audio_files) - {"%s.wav" % self.get_voice_name()})
 
         self.speaker.say("%s/%s" % (self.get_voice_path(), random.choice(candidates)))
+        sleep(5)
         self.status_led.ready()

@@ -17,7 +17,6 @@ class Speaker:
         self.channel = pygame.mixer.Channel(0)
         self.channel.set_volume(0)
 
-
     def say(self, file):
 
         if not os.path.exists(file):
@@ -29,8 +28,10 @@ class Speaker:
         volume = round(self.volume/100.0,2)
         self.channel.set_volume(volume)
         self.logger.debug("Volume is %s"%volume)
+
         sound = Sound(file)
         sound.set_volume(1.0)
+
         self.channel.play(sound)
 
         #while self.channel.get_busy() == True:

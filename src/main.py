@@ -19,8 +19,7 @@ def main():
     doorbell.init()
 
     try:
-
-        while True :
+        while True:
             sleep(.1)
 
     except KeyboardInterrupt:
