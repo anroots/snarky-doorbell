@@ -1,32 +1,17 @@
 import RPi.GPIO as GPIO
 
-from pi_switch import RCSwitchReceiver
-
-
 class Receiver:
 
-    def __init__(self, data_pin):
-        GPIO.setup(data_pin,GPIO.IN)
+    data_pin = None
+    trigger_callback = None
+
+    def __init__(self, data_pin, trigger_callback):
+        GPIO.setup(data_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+        GPIO.add_event_detect(data_pin, GPIO.RISING, callback=self.on_receive, bouncetime=50)
         self.data_pin = data_pin
+        self.trigger_callback = trigger_callback
 
-
-    def test(self):
-
-        receiver = RCSwitchReceiver()
-        receiver.enableReceive(self.data_pin)
-
-        num = 0
-        print "Listening on pin %s" %self.data_pin
-        while True:
-            if receiver.available():
-                print "Data available"
-                received_value = receiver.getReceivedValue()
-                if received_value:
-                    num += 1
-                    print("Received[%s]:" % num)
-                    print(received_value)
-                    print("%s / %s bit" % (received_value, receiver.getReceivedBitlength()))
-                    print("Protocol: %s" % receiver.getReceivedProtocol())
-                    print("")
-
-                receiver.resetAvailable()
+    def on_receive(self, pin):
+        print "Received from %s" %pin
+        self.trigger_callback()

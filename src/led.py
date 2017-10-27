@@ -1,5 +1,4 @@
 import RPi.GPIO as GPIO
-from time import sleep
 
 class Led:
 
@@ -12,18 +11,26 @@ class Led:
         GPIO.setup(self.green_pin, GPIO.OUT)
         GPIO.setup(self.blue_pin, GPIO.OUT)
 
-        GPIO.output(self.green_pin, 1)
-        GPIO.output(self.green_pin, 1)
-        GPIO.output(self.green_pin, 1)
+        self.reset()
+
+    def reset(self):
+        GPIO.output(self.green_pin, GPIO.HIGH)
+        GPIO.output(self.red_pin, GPIO.HIGH)
+        GPIO.output(self.blue_pin, GPIO.HIGH)
+
+    def red(self):
+        self.reset()
+        GPIO.output(self.red_pin, GPIO.LOW)
+
+    def green(self):
+        self.reset()
+        GPIO.output(self.green_pin, GPIO.LOW)
+    def blue(self):
+        self.reset()
+        GPIO.output(self.blue_pin,GPIO.LOW)
+
     def ready(self):
-        sleep(2)
-        GPIO.output(self.green_pin, 0)
-        sleep(2)
-        GPIO.output(self.green_pin, 1)
-        GPIO.output(self.red_pin, 0)
-        sleep(2)
-        GPIO.output(self.red_pin, 1)
-        GPIO.output(self.blue_pin, 0)
-        sleep(2)
-        GPIO.output(self.blue_pin, 1)
-        return
+        self.green()
+
+    def ringing(self):
+        self.blue()

@@ -24,6 +24,7 @@ class Encoder:
         self.gpioA = gpioA
         self.gpioB = gpioB
         self.callback = callback
+        self.halfTurnCounter = 0
 
         self.gpioButton = buttonPin
         self.buttonCallback = buttonCallback
@@ -59,6 +60,11 @@ class Encoder:
         # Debounce.
         if channel == self.lastGpio:
             return
+
+        if self.halfTurnCounter == 0:
+            self.halfTurnCounter = 1
+            return
+        self.halfTurnCounter = 1
 
         # When both inputs are at 1, we'll fire a callback. If A was the most
         # recent pin set high, it'll be forward, and if B was the most recent pin

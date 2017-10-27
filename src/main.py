@@ -16,13 +16,12 @@ def main():
     logger.info('Starting up...')
 
     doorbell = Doorbell(logger)
+    doorbell.init()
 
     try:
 
-        doorbell.startup()
-
         while True :
-            sleep(4)
+            sleep(.1)
 
     except KeyboardInterrupt:
         logger.info('Got KeyboardInterrupt, cleaning up GPIO and exiting')
