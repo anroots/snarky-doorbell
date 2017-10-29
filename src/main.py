@@ -1,6 +1,7 @@
 from time import sleep
 import logging
 import RPi.GPIO as GPIO
+import redis
 
 from doorbell import Doorbell
 
@@ -15,7 +16,10 @@ def main():
 
     logger.info('Starting up...')
 
-    doorbell = Doorbell(logger)
+    logger.info('Connecting to Redis DB...')
+
+    r = redis.StrictRedis(host='localhost', port=6379, db=0)
+    doorbell = Doorbell(logger, r)
     doorbell.init()
 
     try:

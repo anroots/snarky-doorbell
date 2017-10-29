@@ -11,6 +11,7 @@
     - git
     - omxplayer
     - python-pygame
+    - redis-server
 
 - name: Checkout wiringPi
   git:
@@ -29,3 +30,4 @@
   with_items:
     - pi_switch
     - pygame
+    - redis

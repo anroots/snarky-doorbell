@@ -11,10 +11,6 @@ from receiver import Receiver
 
 class Doorbell:
 
-    volume = 10
-    voice = 0
-    style = 0
-    status = 0
     initial_delay = 1
 
     audio_path = '/opt/doorbell/wav/voices'
@@ -23,9 +19,12 @@ class Doorbell:
     status_led = None
     voices = []
 
-    def __init__(self, logger):
+    redis = None  # type: redis
+
+    def __init__(self, logger, redis):
 
         self.logger = logger
+        self.redis = redis
 
     def init(self):
         """
@@ -54,19 +53,30 @@ class Doorbell:
         Receiver(10, self.ring)
 
         # We have a speaker on the 3.5mm RPi audio jack
-        self.speaker = Speaker(self.logger, self.volume)
+        self.speaker = Speaker(self.logger)
 
         self.voices = self.list_voices()
+
+        self.init_config()
+
         self.logger.debug("Init done, will wait for I/O interrupts...")
 
     def mute(self, pin):
         self.logger.debug("Mute pressed!")
-        self.speaker.set_volume(0)
-        self.volume = 0
+        self.redis.set('volume', 0)
+
+    def get_style(self):
+        return int(self.redis.get('style'))
+
+    def get_voice(self):
+        return int(self.redis.get('voice'))
+
+    def get_volume(self):
+        return int(self.redis.get('volume'))
 
     def change_style(self, direction):
         self.change('style', direction, min=0, max=100, amount=1)
-        self.logger.info('Style set to %d', self.style)
+        self.logger.info('Style set to %d', self.get_style())
 
     def style_button(self, value):
         self.logger.info("Shutdown button pressed, shutting down...")
@@ -74,15 +84,14 @@ class Doorbell:
 
     def change_volume(self, direction):
         self.change('volume', direction, min=0, max=100, amount=5)
-        self.speaker.set_volume(self.volume)
-        self.speaker.say("%s/volume.wav" % self.audio_path)
-        self.logger.info('Volume set to %d', self.volume)
+        self.speaker.say("%s/volume.wav" % self.audio_path, self.get_volume())
+        self.logger.info('Volume set to %d', self.get_volume())
 
     def voice_button(self, value):
         self.logger.debug("Voice button pressed")
 
     def change(self, attribute, direction, min=0, max=100, amount=1):
-        value = getattr(self, attribute)
+        value = int(self.redis.get(attribute))
         newvalue = value + (amount * direction)
 
         if newvalue > max:
@@ -99,7 +108,7 @@ class Doorbell:
             else:
                 newvalue = max
 
-        setattr(self, attribute, newvalue)
+        self.redis.set(attribute, newvalue)
 
     def list_voices(self):
         voices = [name for name in os.listdir(self.audio_path) if os.path.isdir(os.path.join(self.audio_path, name))]
@@ -110,14 +119,14 @@ class Doorbell:
 
         self.change('voice', direction, min=0, max=len(self.voices)-1, amount=1)
 
-        self.speaker.say("%s/%s/name.wav" % (self.audio_path, self.get_voice_name()))
-        self.logger.info('Voice set to %d', self.voice)
+        self.speaker.say("%s/%s/name.wav" % (self.audio_path, self.get_voice_name()), self.get_volume())
+        self.logger.info('Voice set to %d', self.get_voice())
 
     def get_voice_path(self):
         return "%s/%s" % (self.audio_path,self.get_voice_name())
 
     def get_voice_name(self):
-        return self.voices[self.voice]
+        return self.voices[self.get_voice()]
 
     def log_ring(self, audio_file, volume):
         log_file = "%s/%s.json" % (self.log_path, strftime("%Y-%m"))
@@ -134,6 +143,10 @@ class Doorbell:
             feeds.append(entry)
             json.dump(feeds, ring_logs)
 
+        self.redis.set('total_rings', int(self.redis.get('total_rings'))+1)
+        self.redis.set('rings_since_boot', int(self.redis.get('rings_since_boot'))+1)
+        self.redis.set('last_ring', time())
+
     def ring(self):
         self.status_led.ringing()
 
@@ -144,8 +157,15 @@ class Doorbell:
         candidates = list(set(audio_files) - {"%s.wav" % self.get_voice_name()})
         audio_file = "%s/%s" % (self.get_voice_path(), random.choice(candidates))
 
-        self.speaker.say(audio_file)
-        self.log_ring(audio_file, self.volume)
+        self.speaker.say(audio_file, self.get_volume())
+        self.log_ring(audio_file, self.get_volume())
 
         sleep(5)
         self.status_led.ready()
+
+    def init_config(self):
+        self.redis.set('rings_since_boot', 0)
+
+        for key in ['volume', 'style', 'voice', 'total_rings', 'last_ring']:
+            if self.redis.get(key) is None:
+                self.redis.set(key, 0)
