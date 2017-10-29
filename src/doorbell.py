@@ -129,12 +129,22 @@ class Doorbell:
         return self.voices[self.get_voice()]
 
     def log_ring(self, audio_file, volume):
+        """
+        Save log about the ring event to the JSON log file
+        :param audio_file: Full path to an audio file that was played
+        :param volume: Volume of the ring
+        :return:
+        """
+
+        # Log files are rotated on a monthly basis
         log_file = "%s/%s.json" % (self.log_path, strftime("%Y-%m"))
 
+        # Create the log file if it doesn't exist
         if not os.path.isfile(log_file):
             with open(log_file, mode='w') as f:
                 json.dump([], f)
 
+        # Append a new entry to the log file-s JSON array
         with open(log_file, mode='r') as ring_logs:
             feeds = json.load(ring_logs)
 
@@ -143,16 +153,25 @@ class Doorbell:
             feeds.append(entry)
             json.dump(feeds, ring_logs)
 
+        # Increment stats counters in Redis
         self.redis.set('total_rings', int(self.redis.get('total_rings'))+1)
         self.redis.set('rings_since_boot', int(self.redis.get('rings_since_boot'))+1)
         self.redis.set('last_ring', time())
 
     def ring(self):
+        """
+        Ring the doorbell
+
+        Triggered when the "test" button is pressed or if the Receiver picks up
+        an actual radio transmission from the real doorbell button
+        :return:
+        """
         self.status_led.ringing()
 
-        # Wait for the "real" doorbell to do it's "ding-dong"
+        # Wait for the "real" doorbell to do it's "ding-dong" sound
         sleep(self.initial_delay)
 
+        # Select an audio file to play
         audio_files = os.listdir(self.get_voice_path())
         candidates = list(set(audio_files) - {"%s.wav" % self.get_voice_name()})
         audio_file = "%s/%s" % (self.get_voice_path(), random.choice(candidates))
@@ -160,10 +179,19 @@ class Doorbell:
         self.speaker.say(audio_file, self.get_volume())
         self.log_ring(audio_file, self.get_volume())
 
-        sleep(5)
+        # Pseudo polling: keep the status light active for some seconds after
+        # the doorbell has rung. A better implementation would hook into
+        # pygame's event system and trigger LED change when the sound actually finishes
+        # playing (and would be non-blocking)
+        sleep(2)
+
         self.status_led.ready()
 
     def init_config(self):
+        """
+        Set configuration keys to default values in Redis, if they do not exist
+        :return:
+        """
         self.redis.set('rings_since_boot', 0)
 
         for key in ['volume', 'style', 'voice', 'total_rings', 'last_ring']:

@@ -25,6 +25,7 @@ class Led:
     def green(self):
         self.reset()
         GPIO.output(self.green_pin, GPIO.LOW)
+
     def blue(self):
         self.reset()
         GPIO.output(self.blue_pin,GPIO.LOW)

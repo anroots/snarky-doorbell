@@ -17,8 +17,8 @@ def main():
     logger.info('Starting up...')
 
     logger.info('Connecting to Redis DB...')
-
     r = redis.StrictRedis(host='localhost', port=6379, db=0)
+
     doorbell = Doorbell(logger, r)
     doorbell.init()
 

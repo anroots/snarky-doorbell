@@ -2,6 +2,7 @@ import RPi.GPIO as GPIO
 
 class Receiver:
 
+
     data_pin = None
     trigger_callback = None
 

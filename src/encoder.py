@@ -61,6 +61,9 @@ class Encoder:
         if channel == self.lastGpio:
             return
 
+        # Hack to ignore one rotation of the encoder
+        # The physical encoder has "half-turn" detection, meaning one "turn" is actually read as two
+        # Ignoring one turn avoids that
         if self.halfTurnCounter == 0:
             self.halfTurnCounter = 1
             return
