@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Snarky Doorbell</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css"
+          integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+  <style type="text/css">
+      body {
+        margin-top: 60px;
+      }
+
+      footer {
+        text-align: center;
+        margin: 4em 0;
+        padding-top: 1em;
+        border-top: 1px solid #eee;
+      }
+  </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="display-1">Snarky Doorbell</h1>
+    <p class="lead">Snarky Doorbell is a office doorbell with an attitude.
+        Read more about the project from the <a href="" target="_blank">blog post</a>.</p>
+    <p><small>This machine is the IoT doorbell itself, running on a Raspberry Pi 3.</small></p>
+    <h2>HTTP API</h2>
+
+    <p>The Doorbell exposes an HTTP API for future integrations.</p>
+
+    <h3>GET /logs</h3>
+    <p>The doorbell logs to a file for every doorbell ring. This file is rotated on a monthly basis (<code>2017-11.json</code>) and can be
+    used to do analytics.</p>
+    <p>This endpoint will return a list of log file links present on the machine, which can then be individually fetched.</p>
+    <h4>Sample Request</h4>
+    <pre><code>GET /logs</code></pre>
+    <h4>Sample Response</h4>
+    <pre><code>{["/log/2017/11", "/log/2017/12"]}</code></pre>
+
+    <h3>GET /log/&lt;year&gt;/&lt;month&gt;</h3>
+    <p>Get log files from all doorbell rings during the specified <code>&lt;year&gt;</code> and <code>&lt;month&gt;</code>.</p>
+    <h4>Sample Request</h4>
+    <pre><code>GET /log/2017/10</code></pre>
+    <h4>Sample Response</h4>
+    <pre><code>[{"volume": 10, "audio_file": "/opt/doorbell/wav/voices/male3/mina_tellisin_pizza.wav", "time": 1509278570.684281}, {"volume": 10, "audio_file": "/opt/doorbell/wav/voices/male3/mina_tellisin_pizza.wav", "time": 1509278599.129462}]</code></pre>
+
+    <h3>GET /poll</h3>
+    <p>Start a HTTP long-polling request that will stay open until the doorbell rings. The request will either time out at 60 seconds and return
+    a failure result (in JSON) or return as soon as the doorbel was rung (with a success status in JSON). This is useful for implementing integrations
+    that should trigger when the doorbell was rung.</p>
+
+    <p>Long polling was implemented to avoid implementing a more complex webhook system (with DoS vector protections).</p>
+    <h4>Sample Request</h4>
+    <pre><code>GET /poll</code></pre>
+    <h4>Sample Response</h4>
+    <pre><code>{"currently_ringing": true}</code></pre>
+
+    <h3>GET /stats</h3>
+    <p>Return generic stats about the doorbell.</p>
+    <h4>Sample Request</h4>
+    <pre><code>GET /stats</code></pre>
+    <h4>Sample Response</h4>
+    <pre><code></code></pre>
+
+    <footer>
+        <p><small>This IoT project was created by
+        <a href="https://sqroot.eu" target="_blank">Ando Roots</a> for s*its and giggles.</small></p>
+    </footer>
+</div>
+</body>
+</html>

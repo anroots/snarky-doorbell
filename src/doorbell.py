@@ -15,6 +15,7 @@ class Doorbell:
     voice = 0
     style = 0
     status = 0
+    initial_delay = 1
 
     audio_path = '/opt/doorbell/wav/voices'
     log_path = '/opt/doorbell/logs'
@@ -59,7 +60,7 @@ class Doorbell:
         self.logger.debug("Init done, will wait for I/O interrupts...")
 
     def mute(self, pin):
-        self.logger.info("Mute pressed!")
+        self.logger.debug("Mute pressed!")
         self.speaker.set_volume(0)
         self.volume = 0
 
@@ -68,7 +69,8 @@ class Doorbell:
         self.logger.info('Style set to %d', self.style)
 
     def style_button(self, value):
-        self.logger.info("Style button pressed")
+        self.logger.info("Shutdown button pressed, shutting down...")
+        os.system("sudo shutdown -h now")
 
     def change_volume(self, direction):
         self.change('volume', direction, min=0, max=100, amount=5)
@@ -77,7 +79,7 @@ class Doorbell:
         self.logger.info('Volume set to %d', self.volume)
 
     def voice_button(self, value):
-        self.logger.info("Voice button pressed")
+        self.logger.debug("Voice button pressed")
 
     def change(self, attribute, direction, min=0, max=100, amount=1):
         value = getattr(self, attribute)
@@ -132,9 +134,11 @@ class Doorbell:
             feeds.append(entry)
             json.dump(feeds, ring_logs)
 
-
     def ring(self):
         self.status_led.ringing()
+
+        # Wait for the "real" doorbell to do it's "ding-dong"
+        sleep(self.initial_delay)
 
         audio_files = os.listdir(self.get_voice_path())
         candidates = list(set(audio_files) - {"%s.wav" % self.get_voice_name()})
