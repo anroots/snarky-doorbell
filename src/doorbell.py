@@ -1,6 +1,7 @@
+import json
 import os
 import random
-from time import sleep
+from time import sleep, strftime, time
 
 from encoder import Encoder
 from led import Led
@@ -16,6 +17,8 @@ class Doorbell:
     status = 0
 
     audio_path = '/opt/doorbell/wav/voices'
+    log_path = '/opt/doorbell/logs'
+
     status_led = None
     voices = []
 
@@ -97,7 +100,7 @@ class Doorbell:
         setattr(self, attribute, newvalue)
 
     def list_voices(self):
-        voices = os.listdir(self.audio_path)
+        voices = [name for name in os.listdir(self.audio_path) if os.path.isdir(os.path.join(self.audio_path, name))]
         self.logger.info("Found %d installed voices to use: %s" % (len(voices), voices))
         return voices
 
@@ -114,13 +117,31 @@ class Doorbell:
     def get_voice_name(self):
         return self.voices[self.voice]
 
-    def ring(self):
+    def log_ring(self, audio_file, volume):
+        log_file = "%s/%s.json" % (self.log_path, strftime("%Y-%m"))
 
+        if not os.path.isfile(log_file):
+            with open(log_file, mode='w') as f:
+                json.dump([], f)
+
+        with open(log_file, mode='r') as ring_logs:
+            feeds = json.load(ring_logs)
+
+        with open(log_file, mode='w') as ring_logs:
+            entry = {'time': time(), 'audio_file': audio_file, 'volume': volume}
+            feeds.append(entry)
+            json.dump(feeds, ring_logs)
+
+
+    def ring(self):
         self.status_led.ringing()
 
         audio_files = os.listdir(self.get_voice_path())
         candidates = list(set(audio_files) - {"%s.wav" % self.get_voice_name()})
+        audio_file = "%s/%s" % (self.get_voice_path(), random.choice(candidates))
 
-        self.speaker.say("%s/%s" % (self.get_voice_path(), random.choice(candidates)))
+        self.speaker.say(audio_file)
+        self.log_ring(audio_file, self.volume)
+
         sleep(5)
         self.status_led.ready()

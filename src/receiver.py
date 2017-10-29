@@ -13,5 +13,4 @@ class Receiver:
         self.trigger_callback = trigger_callback
 
     def on_receive(self, pin):
-        print "Received from %s" %pin
         self.trigger_callback()

@@ -6,6 +6,12 @@
     state: directory
     owner: pi
 
+- name: Create logs directory
+  file:
+    path: /opt/doorbell/logs
+    state: directory
+    owner: pi
+
 - name: Copy sound files
   copy:
     src: wav
