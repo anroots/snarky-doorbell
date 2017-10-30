@@ -79,6 +79,7 @@ class Doorbell:
         self.logger.info('Style set to %d', self.get_style())
 
     def style_button(self, value):
+        self.status_led.red()
         self.logger.info("Shutdown button pressed, shutting down...")
         os.system("sudo shutdown -h now")
 
@@ -88,7 +89,10 @@ class Doorbell:
         self.logger.info('Volume set to %d', self.get_volume())
 
     def voice_button(self, value):
-        self.logger.debug("Voice button pressed")
+        self.logger.info('Setting voice randomly to %d', self.get_voice())
+        random_voice = random.randrange(0, len(self.voices) - 1)
+        self.redis.set('voice', random_voice)
+        self.speaker.say("%s/%s/name.wav" % (self.audio_path, self.get_voice_name()), self.get_volume())
 
     def change(self, attribute, direction, min=0, max=100, amount=1):
         value = int(self.redis.get(attribute))

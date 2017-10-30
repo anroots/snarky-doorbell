@@ -1,5 +1,6 @@
 - name: Configure doorbell Pi
   hosts: doorbell
   roles: 
+    - base
     - doorbell
     - webserver

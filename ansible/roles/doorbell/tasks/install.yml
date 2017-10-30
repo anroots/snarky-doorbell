@@ -5,10 +5,7 @@
     cache_valid_time: 3600
     state: present
   with_items:
-    - python-dev
     - libboost-python-dev
-    - python-pip
-    - git
     - omxplayer
     - python-pygame
     - redis-server

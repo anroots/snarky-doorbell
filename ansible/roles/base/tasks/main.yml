@@ -1,0 +1,33 @@
+- name: Install apt packages
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+    cache_valid_time: 3600
+    state: present
+  with_items:
+    - python-dev
+    - python-pip
+    - git
+    - ufw
+
+- name: Rate-limit SSH connections
+  ufw:
+    rule: limit
+    port: ssh
+    proto: tcp
+
+- name: Allow SSH
+  ufw:
+    rule: allow
+    name: OpenSSH
+
+- name: Allow webserver access
+  ufw:
+    rule: allow
+    port: 80
+    proto: tcp
+
+- name: Enable firewall
+  ufw:
+    state: enabled
+    logging: on
