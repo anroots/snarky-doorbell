@@ -20,19 +20,20 @@ def hello():
     return render_template('hello.html')
 
 
-@app.route("/stats", methods=['GET'])
-def stats():
-    doorbell_stats = {
+@app.route("/config", methods=['GET'])
+def config():
+    doorbell_config = {
         'uptime': int(round(time.time() - psutil.boot_time())),
         'time': int(round(time.time())),
         'total_rings': int(r.get('total_rings')),
         'rings_since_boot': int(r.get('rings_since_boot')),
-        'current_volume': int(r.get('volume')),
-        'current_style': int(r.get('style')),
-        'current_voice': int(r.get('voice')),
+        'volume': int(r.get('volume')),
+        'language': int(r.get('language')),
+        'switch_voice_randomly': int(r.get('switch_voice_randomly')),
+        'voice': int(r.get('voice')),
         'last_ring': int(round(float(r.get('last_ring'))))
     }
-    return jsonify(doorbell_stats)
+    return jsonify(doorbell_config)
 
 
 def is_ringing():

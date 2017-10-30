@@ -18,6 +18,10 @@ class Doorbell:
 
     status_led = None
     voices = []
+    settings = [
+        {'key': 'language', 'min':0, 'max':1},
+        {'key': 'switch_voice_randomly', 'min': 0, 'max': 1}
+    ]
 
     redis = None  # type: redis
 
@@ -37,13 +41,13 @@ class Doorbell:
         # and set up callback functions that trigger on state changes
 
         # Volume
-        Encoder(17, 4, self.change_volume, 2, self.mute)
+        Encoder(24, 27, self.change_volume, 15, self.mute)
 
         # Voice
         Encoder(22, 23, self.change_voice, 3, self.voice_button)
 
-        # Style
-        Encoder(24, 27, self.change_style, 15, self.style_button)
+        # Setting
+        Encoder(17, 4, self.change_setting, 2, self.setting_button)
 
         # RGB PWM LED on those pins for status indication
         self.status_led = Led(12, 18, 13)
@@ -65,8 +69,8 @@ class Doorbell:
         self.logger.debug("Mute pressed!")
         self.redis.set('volume', 0)
 
-    def get_style(self):
-        return int(self.redis.get('style'))
+    def get_setting_index(self):
+        return int(self.redis.get('setting_index'))
 
     def get_voice(self):
         return int(self.redis.get('voice'))
@@ -74,25 +78,21 @@ class Doorbell:
     def get_volume(self):
         return int(self.redis.get('volume'))
 
-    def change_style(self, direction):
-        self.change('style', direction, min=0, max=100, amount=1)
-        self.logger.info('Style set to %d', self.get_style())
+    def change_setting(self, direction):
+        self.change('setting_index', direction, min=0, max=len(self.settings)-1, amount=1)
 
-    def style_button(self, value):
-        self.status_led.red()
-        self.logger.info("Shutdown button pressed, shutting down...")
-        os.system("sudo shutdown -h now")
+    def setting_button(self, value):
+        setting = self.settings[self.get_setting_index()]
+        self.change(setting['key'], 1, setting['min'], setting['max'])
 
     def change_volume(self, direction):
         self.change('volume', direction, min=0, max=100, amount=5)
         self.speaker.say("%s/volume.wav" % self.audio_path, self.get_volume())
-        self.logger.info('Volume set to %d', self.get_volume())
 
     def voice_button(self, value):
-        self.logger.info('Setting voice randomly to %d', self.get_voice())
-        random_voice = random.randrange(0, len(self.voices) - 1)
-        self.redis.set('voice', random_voice)
-        self.speaker.say("%s/%s/name.wav" % (self.audio_path, self.get_voice_name()), self.get_volume())
+        self.status_led.red()
+        self.logger.info("Shutdown button pressed, shutting down...")
+        os.system("sudo shutdown -h now")
 
     def change(self, attribute, direction, min=0, max=100, amount=1):
         value = int(self.redis.get(attribute))
@@ -112,6 +112,7 @@ class Doorbell:
             else:
                 newvalue = max
 
+        self.logger.debug('%s set to %d', attribute, newvalue)
         self.redis.set(attribute, newvalue)
 
     def list_voices(self):
@@ -120,11 +121,8 @@ class Doorbell:
         return voices
 
     def change_voice(self, direction):
-
         self.change('voice', direction, min=0, max=len(self.voices)-1, amount=1)
-
         self.speaker.say("%s/%s/name.wav" % (self.audio_path, self.get_voice_name()), self.get_volume())
-        self.logger.info('Voice set to %d', self.get_voice())
 
     def get_voice_path(self):
         return "%s/%s" % (self.audio_path,self.get_voice_name())
@@ -198,6 +196,10 @@ class Doorbell:
         """
         self.redis.set('rings_since_boot', 0)
 
-        for key in ['volume', 'style', 'voice', 'total_rings', 'last_ring']:
+        for key in ['volume', 'setting_index', 'voice', 'total_rings', 'last_ring']:
             if self.redis.get(key) is None:
                 self.redis.set(key, 0)
+
+        for setting in self.settings:
+            if self.redis.get(setting['key']) is None:
+                self.redis.set(setting['key'], 0)

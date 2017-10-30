@@ -1,16 +1,7 @@
-sudo apt-get install python-dev libboost-python-dev python-pip
-sudo pip install pi_switch
+# Snarky Doorbell
 
 
-./bootstrap.sh --with-libraries=python --with-python=python3.2
-sudo ./b2 install
 
+## License
 
-Set system volume to maximum
-
-```bash
-$ amixer set PCM -- 100%
-
-# Make this permanent
-$ sudo alsactl store
-```
+[Apache License 2.0 (Apache-2.0)](https://tldrlegal.com/license/apache-license-2.0-(apache-2.0))

@@ -1,5 +1,11 @@
 - include: install.yml
 
+- name: Set system volume to maximum
+  command: amixer set PCM -- 100%
+
+- name: Store system volume setting accross boots
+  command: sudo alsactl store
+
 - name: Create doorbell home directory
   file:
     path: /opt/doorbell
