@@ -1,9 +1,9 @@
 # Snarky Doorbell
 
-Snarky Doorbell is an IoT doorbell with an attitude. Instead of a normal mono "ding-dong",
+Snarky Doorbell is an IoT doorbell with an attitude. Instead of a monotonic "ding-dong",
 it responds with a snarky voice comment whenever our office doorbell is rung.
 
-[![snarky-doorbell]()](https://www.youtube.com/watch?v=ut_KckcVxW0)
+[![snarky-doorbell](https://raw.githubusercontent.com/anroots/snarky-doorbell/master/img/cover.jpg)](https://www.youtube.com/watch?v=ut_KckcVxW0)
 
 Read a longer [blog post](https://sqroot.eu/2017/snarky-doorbell) on how this was built,
 or watch a [project build video from YouTube](https://www.youtube.com/watch?v=ut_KckcVxW0).
@@ -15,6 +15,15 @@ or watch a [project build video from YouTube](https://www.youtube.com/watch?v=ut
 - Built-in WiFi HTTP RESTful API server (statistics on doorbell rings)
 - Open source project plans
 - Non-intrusive integration with the existing doorbell system (uses the same doorbell button)
+
+## Project Structure
+
+- `ansible/` - Ansible playbook for installing and configuring the Raspberry "brain"
+- `doc/` - Misc documentation files (voice persona lines)
+- `firmware/` - Arduino firmware for the doorbell RF receiver module
+- `hardware/` - Hardware schematics
+- `src/` - Python daemon (doorbell controller) and webserver code for the Raspberry
+- `wav/` - Doorbell ringtones
 
 ## Voices
 
