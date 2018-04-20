@@ -1,5 +1,10 @@
-#include <RFControl.h>
+// This is the Arduino firmware
+// for snarky-doorbell RF receiver module
+// The whole purpose of this is to turn
+// a pin HIGH when the doorbell button has been
+// pressed, so that Raspberry could react
 
+#include <RFControl.h>
 
 const unsigned int TRUE_MARK = 500;
 
@@ -11,7 +16,6 @@ const unsigned char OUTPUT_PIN = 3;
 const unsigned char LED_PIN = A5;
 
 void setup() {
-  //Serial.begin(9600);
   
   pinMode(OUTPUT_PIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
@@ -19,11 +23,7 @@ void setup() {
   digitalWrite(OUTPUT_PIN, LOW);
   digitalWrite(LED_PIN, LOW);
   RFControl::startReceiving(0);
-
-  
 }
-
-
 
 bool is_one(unsigned long time) {
   return time > TRUE_MARK;
@@ -33,7 +33,6 @@ bool is_zero(unsigned long time) {
   return time <= TRUE_MARK;
 }
 
-
 void activate() {
   digitalWrite(OUTPUT_PIN, HIGH);
   digitalWrite(LED_PIN, HIGH);
@@ -41,9 +40,7 @@ void activate() {
   digitalWrite(OUTPUT_PIN, LOW);
   digitalWrite(LED_PIN, LOW);
   RFControl::continueReceiving();
-  //Serial.println("ACTIVATE");
 }
-
 
 void loop() {
 
@@ -65,14 +62,13 @@ void loop() {
   for (int i = 0; i < timings_size; i++) {
 
     unsigned long timing = timings[i] * pulse_length_divider;
-    //Serial.println(timing);
+    
     if (index + 1 == PATTERN_LENGTH) {
       activate();
       return;
     }
     
     if (is_one(timing)) {
-      //Serial.print(1);
       if (PATTERN[index] != 1) {
         break;
       }
@@ -81,7 +77,6 @@ void loop() {
     }
 
     if (is_zero(timing)) {
-      //Serial.print(0);
       if (PATTERN[index] != 0) {
         break;
       }
@@ -90,7 +85,6 @@ void loop() {
     }
   }
   
-
   digitalWrite(LED_PIN, LOW);
   RFControl::continueReceiving();
 }
