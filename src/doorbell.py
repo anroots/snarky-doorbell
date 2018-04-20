@@ -19,8 +19,12 @@ class Doorbell:
     status_led = None
     voices = []
     settings = [
-        {'key': 'language', 'min':0, 'max':1},
-        {'key': 'switch_voice_randomly', 'min': 0, 'max': 1}
+        {'key': 'language', 'min': 0, 'max': 1}
+    ]
+
+    languages = [
+        'estonian',
+        'english'
     ]
 
     redis = None  # type: redis
@@ -63,11 +67,18 @@ class Doorbell:
 
         self.init_config()
 
+        self.system_say("boot")
         self.logger.debug("Init done, will wait for I/O interrupts...")
 
     def mute(self, pin):
         self.logger.debug("Mute pressed!")
-        self.redis.set('volume', 0)
+
+        if int(self.redis.get("volume")) == 0:
+            self.redis.set('volume', 20)
+            self.system_say("mute-off")
+        else:
+            self.system_say("mute-on")
+            self.redis.set('volume', 0)
 
     def get_setting_index(self):
         return int(self.redis.get('setting_index'))
@@ -80,18 +91,30 @@ class Doorbell:
 
     def change_setting(self, direction):
         self.change('setting_index', direction, min=0, max=len(self.settings)-1, amount=1)
+        setting = self.settings[self.get_setting_index()]
+        value = self.redis.get(setting['key'])
+        self.system_say("%s-%s" % (setting['key'], value))
 
     def setting_button(self, value):
         setting = self.settings[self.get_setting_index()]
         self.change(setting['key'], 1, setting['min'], setting['max'])
 
+        # Reload list of available voices when language changes
+        if setting['key'] == 'language':
+            self.voices = self.list_voices()
+
+        value = self.redis.get(setting['key'])
+        self.system_say("%s-%s" % (setting['key'], value))
+
     def change_volume(self, direction):
         self.change('volume', direction, min=0, max=100, amount=5)
-        self.speaker.say("%s/volume.wav" % self.audio_path, self.get_volume())
+        self.system_say("volume")
 
     def voice_button(self, value):
         self.status_led.red()
         self.logger.info("Shutdown button pressed, shutting down...")
+        self.system_say("shutdown")
+        sleep(6)
         os.system("sudo shutdown -h now")
 
     def change(self, attribute, direction, min=0, max=100, amount=1):
@@ -102,6 +125,7 @@ class Doorbell:
 
             # Wrap back to the beginning, except for the volume control
             if attribute == "volume":
+                self.system_say("volume-maximum")
                 newvalue = max
             else:
                 newvalue = min
@@ -115,17 +139,37 @@ class Doorbell:
         self.logger.debug('%s set to %d', attribute, newvalue)
         self.redis.set(attribute, newvalue)
 
+    def get_audio_path(self):
+        language = self.languages[int(self.redis.get("language"))]
+        path =  "%s/%s" % (self.audio_path, language)
+        self.logger.info("Language=%s; path=%s" % (language, path))
+        return "%s/%s" % (self.audio_path, self.languages[int(self.redis.get("language"))])
+
+    def is_candidate_voice(self, name):
+        return os.path.isdir(os.path.join(self.get_audio_path(), name)) and name != "system"
+
     def list_voices(self):
-        voices = [name for name in os.listdir(self.audio_path) if os.path.isdir(os.path.join(self.audio_path, name))]
+        voices = [name for name in os.listdir(self.get_audio_path()) if self.is_candidate_voice(name)]
         self.logger.info("Found %d installed voices to use: %s" % (len(voices), voices))
         return voices
 
+    def system_say(self, name):
+        self.speaker.say("%s/system/%s.wav" % (self.audio_path, name), self.get_volume())
+
+    def play_voice_name(self, voice_name):
+        audio_file = "%s/%s/name.wav" % (self.get_audio_path(), voice_name)
+
+        if not os.path.isfile(voice_name):
+            audio_file = self.get_random_ringtone()
+
+        self.speaker.say(audio_file, self.get_volume())
+
     def change_voice(self, direction):
         self.change('voice', direction, min=0, max=len(self.voices)-1, amount=1)
-        self.speaker.say("%s/%s/name.wav" % (self.audio_path, self.get_voice_name()), self.get_volume())
+        self.play_voice_name(self.get_voice_name())
 
     def get_voice_path(self):
-        return "%s/%s" % (self.audio_path,self.get_voice_name())
+        return "%s/%s" % (self.get_audio_path(), self.get_voice_name())
 
     def get_voice_name(self):
         return self.voices[self.get_voice()]
@@ -160,6 +204,12 @@ class Doorbell:
         self.redis.set('rings_since_boot', int(self.redis.get('rings_since_boot'))+1)
         self.redis.set('last_ring', time())
 
+    def get_random_ringtone(self):
+        # Select an audio file to play
+        audio_files = os.listdir(self.get_voice_path())
+        candidates = list(set(audio_files) - {"name.wav"})
+        return "%s/%s" % (self.get_voice_path(), random.choice(candidates))
+
     def ring(self):
         """
         Ring the doorbell
@@ -173,11 +223,7 @@ class Doorbell:
         # Wait for the "real" doorbell to do it's "ding-dong" sound
         sleep(self.initial_delay)
 
-        # Select an audio file to play
-        audio_files = os.listdir(self.get_voice_path())
-        candidates = list(set(audio_files) - {"%s.wav" % self.get_voice_name()})
-        audio_file = "%s/%s" % (self.get_voice_path(), random.choice(candidates))
-
+        audio_file = self.get_random_ringtone()
         self.speaker.say(audio_file, self.get_volume())
         self.log_ring(audio_file, self.get_volume())
 

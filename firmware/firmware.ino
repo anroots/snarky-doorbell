@@ -1,27 +1,18 @@
 #include <RFControl.h>
 
 
-
-//SHORT_UP, SHORT_DOWN, LONG_UP, SHORT_DOWN, LONG_UP, SHORT_DOWN, LONG_UP, LONG_DOWN, SHORT_UP, SHORT_DOWN, LONG_UP, LONG_DOWN, SHORT_UP, LONG_DOWN,
-//SHORT_UP, SHORT_DOWN, LONG_UP, SHORT_DOWN, LONG_UP, SHORT_DOWN, LONG_UP, LONG_DOWN, SHORT_UP, LONG_DOWN, SHORT_UP, LONG_DOWN, SHORT_UP
-// 388 264 764 252 764 272 748 564 388 264 748 576 356 588 360 280 744 284 744 276 740 592 352 580 364 5656
-
-
-// Microsecond durations for different signals
-const unsigned int LONG_UP = 730;
-const unsigned int LONG_DOWN = 550;
-
-// Fault tolerance in ms, for signal durations
-const unsigned char TOLERANCE = 50;
+const unsigned int TRUE_MARK = 500;
 
 // Signal pattern to match
-const unsigned char PATTERN_LENGTH = 11;
-const unsigned char PATTERN[PATTERN_LENGTH] = {1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0};
+const unsigned char PATTERN_LENGTH = 4;
+const unsigned char PATTERN[PATTERN_LENGTH] = {0, 0, 1, 1};
 
 const unsigned char OUTPUT_PIN = 3;
 const unsigned char LED_PIN = A5;
 
 void setup() {
+  //Serial.begin(9600);
+  
   pinMode(OUTPUT_PIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
   
@@ -33,16 +24,13 @@ void setup() {
 }
 
 
-bool between(unsigned int input, unsigned int min, unsigned int max) {
-  return input >= min && input <= max;
-}
 
 bool is_one(unsigned long time) {
-  return between(time, LONG_UP - TOLERANCE, LONG_UP + TOLERANCE);
+  return time > TRUE_MARK;
 }
 
 bool is_zero(unsigned long time) {
-  return between(time, LONG_DOWN - TOLERANCE, LONG_DOWN + TOLERANCE);
+  return time <= TRUE_MARK;
 }
 
 
@@ -53,6 +41,7 @@ void activate() {
   digitalWrite(OUTPUT_PIN, LOW);
   digitalWrite(LED_PIN, LOW);
   RFControl::continueReceiving();
+  //Serial.println("ACTIVATE");
 }
 
 
@@ -72,17 +61,18 @@ void loop() {
   unsigned char index = 0;
 
   RFControl::getRaw(&timings, &timings_size);
-
+  
   for (int i = 0; i < timings_size; i++) {
 
     unsigned long timing = timings[i] * pulse_length_divider;
-
+    //Serial.println(timing);
     if (index + 1 == PATTERN_LENGTH) {
       activate();
       return;
     }
-
+    
     if (is_one(timing)) {
+      //Serial.print(1);
       if (PATTERN[index] != 1) {
         break;
       }
@@ -91,6 +81,7 @@ void loop() {
     }
 
     if (is_zero(timing)) {
+      //Serial.print(0);
       if (PATTERN[index] != 0) {
         break;
       }
@@ -98,6 +89,7 @@ void loop() {
       index += 1;
     }
   }
+  
 
   digitalWrite(LED_PIN, LOW);
   RFControl::continueReceiving();
